@@ -1,0 +1,40 @@
+openapi: 3.0.3
+info:
+  title: Application request manager
+  description: An service for managing the applicaton request workflow
+  version: 0.0.1
+
+paths:
+  /api/applications:
+    post:
+      operationId: CreateApplication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApplicationRequest'
+      responses:
+        '201':
+          description: 'Application created'
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+
+components:
+  schemas:
+    CreateApplicationRequest:
+      type: object
+      required: 
+        - name
+        - body
+      properties:
+        name: 
+          type: string
+          pattern: '.*\S.*'
+        body: 
+          type: string
+          pattern: '.*\S.*'
+
