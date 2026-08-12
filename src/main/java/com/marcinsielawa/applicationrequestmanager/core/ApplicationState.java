@@ -1,5 +1,5 @@
 package com.marcinsielawa.applicationrequestmanager.core;
 
-public enum State {
+public enum ApplicationState {
     CREATED
 }

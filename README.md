@@ -9,20 +9,13 @@ Acceptence criteria: app is healthy
 I start off by creating an empty spring boot project with some useful dependencies.
 We will be using h2 in memory database and standard non-reactive web.
 
-`
-spring init --dependencies=lombok,web,h2,data-jpa,actuator --build=maven inverview -a applicationrequestmanager -g com.marcinsielawa -j 25
-cd inverview
-`
-`
-mvn spring-boot:run
-`
+`spring init --dependencies=lombok,web,h2,data-jpa,actuator --build=maven inverview -a applicationrequestmanager -g com.marcinsielawa -j 25
+cd inverview`
 
-`
-curl 127.0.0.1:8080/actuator/health
-`
-`
-{"groups":["liveness","readiness"],"status":"UP"}
-`
+`mvn spring-boot:run`
+
+`curl 127.0.0.1:8080/actuator/health`
+`{"groups":["liveness","readiness"],"status":"UP"}`
 
 ## Stage II. Create application use case
 
@@ -40,4 +33,8 @@ Its time to implement the Create Application. Since we know the state names and 
 transitions as a compile-time safe state machine. 
 I introduce a stub service bean, a test to drive the use case development, records and intefaces that make up the service business interface.
 
-
+### Part 3
+I want the create use case to write a new entry in the main store and publish a domain event for the audit log 
+For this to work I will implement the service test using a mock repository bean, mock appliction event publisher.
+I will acompany them by a jpa data test of the h2 backed CRUD repository and I will model database entity for the Application
+So far we will only persist the application, in the next I will implement event triggering
