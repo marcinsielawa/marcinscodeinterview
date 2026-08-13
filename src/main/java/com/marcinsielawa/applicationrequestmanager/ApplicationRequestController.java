@@ -1,14 +1,19 @@
 package com.marcinsielawa.applicationrequestmanager;
 
 import java.net.URI;
+import java.util.Optional;
+import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.marcinsielawa.applicationrequestmanager.core.ApplicationAggregate;
 import com.marcinsielawa.applicationrequestmanager.core.ApplicationRequestService;
 import com.marcinsielawa.applicationrequestmanager.core.Command;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated;
 import com.marcinsielawa.applicationrequestmanager.core.Result;
+import com.marcinsielawa.interview.ApplicationResponse;
+import com.marcinsielawa.interview.ApplicationState;
 import com.marcinsielawa.interview.CreateApplicationRequest;
 import com.marcinsielawa.inverview.DefaultApi;
 
@@ -28,13 +33,27 @@ public class ApplicationRequestController implements DefaultApi{
         
         Result<?> result = sevice.process(new Command.CreateApplication(req.getName(), req.getBody()));
         
-        switch(result) {
-            case Result.Success(_) -> ResponseEntity.created(URI.create("/1")).build();
-            case null -> {}
-            default -> {}
+        return switch(result) {
+            case Result.Success(ApplicationCreated evt) -> ResponseEntity.created(URI.create("/api/applications/" + evt.id())).build();
+            default -> throw new RuntimeException();
+        };
+    }
+
+    @Override
+    public ResponseEntity<ApplicationResponse> retrieveApplication(UUID id) {
+        Optional<ApplicationAggregate> data = sevice.findById(id);
+        
+        if(data.isPresent()) {
+            ApplicationAggregate application = data.get();
+            return ResponseEntity.ok(new ApplicationResponse(
+                    UUID.fromString(application.id()),
+                    ApplicationState.valueOf(application.state().toString()),
+                    application.body(),
+                    application.name(),
+                    application.createdAt()
+            ));
+        } else {
+            return ResponseEntity.notFound().build();
         }
-        
-        
-        return ResponseEntity.created(URI.create("/1")).build();
     }
 }

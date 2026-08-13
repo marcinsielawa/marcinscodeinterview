@@ -37,4 +37,33 @@ I introduce a stub service bean, a test to drive the use case development, recor
 I want the create use case to write a new entry in the main store and publish a domain event for the audit log 
 For this to work I will implement the service test using a mock repository bean, mock appliction event publisher.
 I will acompany them by a jpa data test of the h2 backed CRUD repository and I will model database entity for the Application
-So far we will only persist the application, in the next I will implement event triggering
+So far we will only persist the application, in the next I will implement event triggering. 
+Below one can see an example create and retrieval of an application
+
+`
+curl -v -X POST http://127.0.0.1:8080/api/applications \
+-H 'Content-Type: application/json' \
+-d '{
+  "name": "cash",
+  "body": "gas"
+}'                 
+*   Trying 127.0.0.1:8080...
+* Connected to 127.0.0.1 (127.0.0.1) port 8080
+> POST /api/applications HTTP/1.1
+> Host: 127.0.0.1:8080
+> User-Agent: curl/8.7.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 38
+> 
+* upload completely sent off: 38 bytes
+< HTTP/1.1 201 
+< Location: /api/applications/045ddbb2-3897-41f9-9b07-2fce79f7f8a5
+< Content-Length: 0
+< Date: Thu, 13 Aug 2026 08:27:09 GMT
+`
+
+`
+ curl 127.0.0.1:8080/api/applications/117199f8-1db9-49cc-8666-96cadf5c4638 
+{"id":"117199f8-1db9-49cc-8666-96cadf5c4638","state":"CREATED","name":"gas","body":"cash","createdAt":"2026-08-13T10:25:49.909364+02:00"}
+`

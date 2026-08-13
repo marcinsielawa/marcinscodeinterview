@@ -22,6 +22,23 @@ paths:
               schema:
                 type: string
                 format: uri
+  /api/applications/{id}:
+    get:
+      operationId: RetrieveApplication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Stored application data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
 
 components:
   schemas:
@@ -37,4 +54,28 @@ components:
         body: 
           type: string
           pattern: '.*\S.*'
+    ApplicationState:
+      type: string
+      enum: [CREATED]
+    ApplicationResponse:
+      type: object
+      required:
+        - id
+        - state
+        - name
+        - body
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        state:
+          $ref: '#/components/schemas/ApplicationState'
+        name:
+          type: string
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
 

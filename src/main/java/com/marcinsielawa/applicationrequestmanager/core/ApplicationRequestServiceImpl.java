@@ -1,5 +1,8 @@
 package com.marcinsielawa.applicationrequestmanager.core;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -7,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationEntity;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationRepository;
+import com.marcinsielawa.applicationrequestmanager.persistence.EntityMapper;
+import com.marcinsielawa.interview.ApplicationResponse;
 
 @Service
 public class ApplicationRequestServiceImpl implements ApplicationRequestService {
@@ -35,6 +40,13 @@ public class ApplicationRequestServiceImpl implements ApplicationRequestService 
             }
             default -> throw new RuntimeException();
         }
+    }
+
+    @Override
+    public Optional<ApplicationAggregate> findById(UUID id) {
+        return applicationRepository.findById(id.toString())
+                .filter(e -> e != null)
+                .map(EntityMapper::toDomain);
     }
 
 }
