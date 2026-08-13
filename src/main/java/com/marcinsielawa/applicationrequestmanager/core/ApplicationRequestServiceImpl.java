@@ -36,6 +36,8 @@ public class ApplicationRequestServiceImpl implements ApplicationRequestService 
                 
                 applicationRepository.save(new ApplicationEntity(payload.id(), payload.name(), payload.body(), ApplicationState.CREATED, payload.createdAt()));
                 
+                applicationEventPublisher.publishEvent(payload);
+                
                 return new Result.Success<>(payload);
             }
             default -> throw new RuntimeException();

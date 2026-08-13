@@ -47,23 +47,14 @@ curl -v -X POST http://127.0.0.1:8080/api/applications \
   "name": "cash",
   "body": "gas"
 }'                 
-*   Trying 127.0.0.1:8080...
-* Connected to 127.0.0.1 (127.0.0.1) port 8080
-> POST /api/applications HTTP/1.1
-> Host: 127.0.0.1:8080
-> User-Agent: curl/8.7.1
-> Accept: */*
-> Content-Type: application/json
-> Content-Length: 38
-> 
-* upload completely sent off: 38 bytes
-< HTTP/1.1 201 
-< Location: /api/applications/045ddbb2-3897-41f9-9b07-2fce79f7f8a5
-< Content-Length: 0
-< Date: Thu, 13 Aug 2026 08:27:09 GMT
+...
+Location: /api/applications/045ddbb2-3897-41f9-9b07-2fce79f7f8a5
 `
 
 `
  curl 127.0.0.1:8080/api/applications/117199f8-1db9-49cc-8666-96cadf5c4638 
 {"id":"117199f8-1db9-49cc-8666-96cadf5c4638","state":"CREATED","name":"gas","body":"cash","createdAt":"2026-08-13T10:25:49.909364+02:00"}
 `
+### PART 4
+
+The audit logger has been implemented as a spring application event listener. It stores the domain event during the same transaction as writing to the application store and its synchronous.

@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationEntity;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationRepository;
 
@@ -39,6 +40,7 @@ class UseCaseTests {
         
         assertEquals(Result.Success.class, result.getClass());
         verify(applicationRepository).save(any(ApplicationEntity.class));
+        verify(applicationEventPublisher).publishEvent(any(ApplicationCreated.class));
     }
 
 }
