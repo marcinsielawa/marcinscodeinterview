@@ -21,7 +21,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationEntity;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationRepository;
@@ -69,7 +68,7 @@ class DeleteUseCaseTests {
     }
     
     @Test
-    @DisplayName("Delete application use case - wrong status")
+    @DisplayName("Delete application use case - wrong status - expect CREATED")
     void testDeleteOnlyCreated() {
         
         ApplicationEntity testEntity = new ApplicationEntity(

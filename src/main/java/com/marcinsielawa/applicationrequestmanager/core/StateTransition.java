@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationRejected;
 
 
 public class StateTransition {
@@ -46,6 +47,21 @@ public class StateTransition {
                     eventId,
                     existing.id(),
                     delete.reason(),
+                    now));
+        } else if (command instanceof Command.Reject reject) {
+            if(existing.state() != ApplicationState.VERIFIED &&
+               existing.state() != ApplicationState.ACCEPTED ) 
+                return new TransitionResult.InvalidTransition<>("only VERIFIED or ACCEPTED can be REJECTED");
+            
+            if(reject.reason() == null || reject.reason().isBlank()) 
+                return new TransitionResult.InvalidTransition<>("deletion reason is required");
+            
+            final String eventId = UUID.randomUUID().toString();
+            
+            return new TransitionResult.Complete<>(new ApplicationRejected(
+                    eventId,
+                    existing.id(),
+                    reject.reason(),
                     now));
         }
         return null;

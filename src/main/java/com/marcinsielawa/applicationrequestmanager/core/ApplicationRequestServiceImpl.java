@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.marcinsielawa.applicationrequestmanager.core.Command.Targetted;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationRejected;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationEntity;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationRepository;
 import com.marcinsielawa.applicationrequestmanager.persistence.EntityMapper;
@@ -58,6 +59,16 @@ class ApplicationRequestServiceImpl implements ApplicationRequestService {
                     applicationRepository.save(existing.get());
                     applicationEventPublisher.publishEvent(deleted);
                     return new Result.Success<>(deleted);
+                }
+                case ApplicationRejected rejected -> {
+                    
+                    existing.get().setState(ApplicationState.REJECTED);
+                    existing.get().setReason(rejected.reason());
+                    existing.get().setUpdatedAt(now);
+                    
+                    applicationRepository.save(existing.get());
+                    applicationEventPublisher.publishEvent(rejected);
+                    return new Result.Success<>(rejected);
                 }
                 default -> throw new RuntimeException("Unknown event type");
             }

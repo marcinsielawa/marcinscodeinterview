@@ -68,3 +68,7 @@ Part 1 Delete use case
 I will use the same approach for implementing use cases and their invariants as with the Create Application use case, namely a compile-time safe state transition accompanied by use case oriented tests.
 We dont delete appliations, instead we set the satus to DELETED.
 Its also beneficial to cover a not found case, since you may want to delete a non existing applcation.
+
+Part 2 Reject use case
+
+The rejection use case is trivial to implement because it mimicks deletion only differs with rejection being lefl only for VERIFIED and ACCEPTED applictions.

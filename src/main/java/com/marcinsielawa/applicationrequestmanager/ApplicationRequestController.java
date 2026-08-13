@@ -12,11 +12,13 @@ import com.marcinsielawa.applicationrequestmanager.core.ApplicationRequestServic
 import com.marcinsielawa.applicationrequestmanager.core.Command;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationRejected;
 import com.marcinsielawa.applicationrequestmanager.core.Result;
 import com.marcinsielawa.interview.ApplicationResponse;
 import com.marcinsielawa.interview.ApplicationState;
 import com.marcinsielawa.interview.CreateApplicationRequest;
 import com.marcinsielawa.interview.DeleteApplicationRequest;
+import com.marcinsielawa.interview.RejectApplicationRequest;
 import com.marcinsielawa.inverview.DefaultApi;
 
 import jakarta.validation.Valid;
@@ -46,7 +48,17 @@ public class ApplicationRequestController implements DefaultApi {
         Result result = sevice.process(new Command.Delete(id.toString(), req.getReason()));
         
         return switch(result) {
-            case Result.Success(ApplicationDeleted evt) -> ResponseEntity.noContent().build();
+            case Result.Success(_) -> ResponseEntity.noContent().build();
+            default -> throw new RuntimeException();
+        };
+    }
+    
+    @Override
+    public ResponseEntity<Void> rejectApplication(UUID id, @Valid RejectApplicationRequest req) {
+        Result result = sevice.process(new Command.Reject(id.toString(), req.getReason()));
+        
+        return switch(result) {
+            case Result.Success(_) -> ResponseEntity.noContent().build();
             default -> throw new RuntimeException();
         };
     }
@@ -68,4 +80,6 @@ public class ApplicationRequestController implements DefaultApi {
             return ResponseEntity.notFound().build();
         }
     }
+
+
 }

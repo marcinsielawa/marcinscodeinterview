@@ -58,6 +58,25 @@ paths:
       responses:
         '204':
           description: Application deleted
+  /api/applications/{id}/reject:
+    post:
+      operationId: RejectApplication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectApplicationRequest'
+      responses:
+        '204':
+          description: Application rejected
 
 components:
   schemas:
@@ -74,6 +93,14 @@ components:
           type: string
           pattern: '.*\S.*'
     DeleteApplicationRequest:
+      type: object
+      required: 
+        - reason
+      properties:
+        reason: 
+          type: string
+          pattern: '.*\S.*'
+    RejectApplicationRequest:
       type: object
       required: 
         - reason

@@ -1,5 +1,5 @@
 package com.marcinsielawa.applicationrequestmanager.core;
 
 public enum ApplicationState {
-    CREATED, DELETED
+    CREATED, DELETED, VERIFIED, ACCEPTED, REJECTED
 }
