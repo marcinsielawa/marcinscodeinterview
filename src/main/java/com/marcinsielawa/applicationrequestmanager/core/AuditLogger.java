@@ -21,7 +21,7 @@ public class AuditLogger {
 
     final ObjectMapper objectMapper;
     
-    private final static String REMOVE_ID_AND_TIMESTAMP = "(?i)\"(eventId|applicationRef|createdAt)\"\\s*:\\s*(\"(?:\\\\.|[^\"\\\\])*\"|[^,}]+)\\s*,?|,\\s*(?i)\"(eventId|applicationRef|createdAt)\"\\s*:\\s*(\"(?:\\\\.|[^\"\\\\])*\"|[^,}]+)";
+    private final static String REMOVE_ID_AND_TIMESTAMP = "(?i)\"(eventId|applicationRef|eventTimestamp)\"\\s*:\\s*(\"(?:\\\\.|[^\"\\\\])*\"|[^,}]+)\\s*,?|,\\s*(?i)\"(eventId|applicationRef|eventTimestamp)\"\\s*:\\s*(\"(?:\\\\.|[^\"\\\\])*\"|[^,}]+)";
     
     public AuditLogger() {
         objectMapper = new ObjectMapper();
@@ -36,7 +36,7 @@ public class AuditLogger {
 
         saved.setId(evt.eventId());
         saved.setApplicationRef(evt.applicationRef());
-        saved.setCreatedAt(evt.createdAt());
+        saved.setCreatedAt(evt.eventTimestamp());
         saved.setEventType(evt.getClass().getSimpleName());
         
         String payload = objectMapper.writeValueAsString(evt).replaceAll(REMOVE_ID_AND_TIMESTAMP, "");

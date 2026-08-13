@@ -22,6 +22,38 @@ paths:
               schema:
                 type: string
                 format: uri
+    get:
+      operationId: BrowseApplications
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ApplicationState'
+      responses:
+        '200':
+          description: Paginated index array payload query results wrapper.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedApplicationsResponse'
   /api/applications/{id}:
     get:
       operationId: RetrieveApplication
@@ -39,6 +71,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApplicationResponse'
+    put:
+      operationId: EditApplication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditApplicationRequest'
+      responses:
+        '200':
+          description: Application updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationUpdateResponse'
     delete:
       summary: Delete Application
       operationId: deleteApplication
@@ -135,6 +189,18 @@ components:
         body: 
           type: string
           pattern: '.*\S.*'
+    EditApplicationRequest:
+      type: object
+      required: 
+        - name
+        - body
+      properties:
+        name: 
+          type: string
+          pattern: '.*\S.*'
+        body: 
+          type: string
+          pattern: '.*\S.*'
     DeleteApplicationRequest:
       type: object
       required: 
@@ -165,7 +231,7 @@ components:
           pattern: '.*\S.*'
     ApplicationState:
       type: string
-      enum: [CREATED, DELETED, ACCEPTED, REJECTED, VERIFIED]
+      enum: [CREATED, DELETED, ACCEPTED, REJECTED, VERIFIED, PUBLISHED]
     ApplicationResponse:
       type: object
       required:
@@ -174,6 +240,7 @@ components:
         - name
         - body
         - createdAt
+        - updatedAt
       properties:
         id:
           type: string
@@ -187,6 +254,30 @@ components:
         createdAt:
           type: string
           format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ApplicationUpdateResponse:
+      type: object
+      required:
+        - id
+        - state
+        - name
+        - body
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        state:
+          $ref: '#/components/schemas/ApplicationState'
+        name:
+          type: string
+        body:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
     PublishingResponse:
       type: object
       required:
@@ -195,4 +286,33 @@ components:
         publishingId:
           type: integer
           format: int64
-
+    PagedApplicationsResponse:
+      type: object
+      required:
+        - applications
+        - totalElements
+        - currentPage
+        - pageSize
+        - totalPages
+        - hasNext
+      properties:
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationResponse'
+        totalElements:
+          type: integer
+          format: int64
+          example: 1
+        currentPage:
+          type: integer
+          example: 0
+        pageSize:
+          type: integer
+          example: 10
+        totalPages:
+          type: integer
+          example: 1
+        hasNext:
+          type: boolean
+          example: false

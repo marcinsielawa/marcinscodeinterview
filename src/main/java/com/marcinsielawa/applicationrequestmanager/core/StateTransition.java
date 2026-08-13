@@ -8,6 +8,7 @@ import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationPublished;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationRejected;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationUpdated;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationVerified;
 
 
@@ -50,6 +51,20 @@ public class StateTransition {
                     eventId,
                     existing.id(),
                     delete.reason(),
+                    now));
+        } else if (command instanceof Command.Update update) {
+            if(existing.state() != ApplicationState.VERIFIED &&
+               existing.state() != ApplicationState.CREATED ) 
+                return new TransitionResult.InvalidTransition<>("only update CREATED and VERIFIED");
+            
+            final String eventId = UUID.randomUUID().toString();
+            
+            return new TransitionResult.Complete<>(new ApplicationUpdated(
+                    eventId,
+                    existing.id(),
+                    update.name(),
+                    update.body(),
+                    existing.state(),
                     now));
         } else if (command instanceof Command.Reject reject) {
             if(existing.state() != ApplicationState.VERIFIED &&

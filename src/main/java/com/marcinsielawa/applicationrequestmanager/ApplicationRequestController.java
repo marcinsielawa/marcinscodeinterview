@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -11,15 +12,18 @@ import com.marcinsielawa.applicationrequestmanager.core.ApplicationAggregate;
 import com.marcinsielawa.applicationrequestmanager.core.ApplicationRequestService;
 import com.marcinsielawa.applicationrequestmanager.core.Command;
 import com.marcinsielawa.applicationrequestmanager.core.Event;
-import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationAccepted;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationPublished;
-import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationVerified;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationUpdated;
 import com.marcinsielawa.applicationrequestmanager.core.Result;
+import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationEntity;
 import com.marcinsielawa.interview.ApplicationResponse;
 import com.marcinsielawa.interview.ApplicationState;
+import com.marcinsielawa.interview.ApplicationUpdateResponse;
 import com.marcinsielawa.interview.CreateApplicationRequest;
 import com.marcinsielawa.interview.DeleteApplicationRequest;
+import com.marcinsielawa.interview.EditApplicationRequest;
+import com.marcinsielawa.interview.PagedApplicationsResponse;
 import com.marcinsielawa.interview.PublishingResponse;
 import com.marcinsielawa.interview.RejectApplicationRequest;
 import com.marcinsielawa.inverview.DefaultApi;
@@ -109,15 +113,62 @@ public class ApplicationRequestController implements DefaultApi {
         
         if(data.isPresent()) {
             ApplicationAggregate application = data.get();
+            
             return ResponseEntity.ok(new ApplicationResponse(
                     UUID.fromString(application.id()),
                     ApplicationState.valueOf(application.state().toString()),
                     application.body(),
                     application.name(),
-                    application.createdAt()
+                    application.createdAt(),
+                    application.updatedAt()
             ));
         } else {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @Override
+    public ResponseEntity<PagedApplicationsResponse> browseApplications(Integer page, Integer size,
+            String name, ApplicationState state) {
+        
+        Page<ApplicationAggregate> pageResult = sevice.listApplications(page, size, name, state == null ? null : state.toString());
+        
+        PagedApplicationsResponse response = new PagedApplicationsResponse();
+        
+        response.setApplications(pageResult.getContent().stream().map(
+                e -> new ApplicationResponse(
+                        UUID.fromString(e.id()),
+                        ApplicationState.valueOf(e.state().toString()), 
+                        e.body(),
+                        e.name(),
+                        e.createdAt(),
+                        e.updatedAt()
+                )).toList()); 
+        response.setCurrentPage(pageResult.getNumber());
+        response.setPageSize(pageResult.getSize());
+        response.setTotalElements(pageResult.getTotalElements());
+        response.setTotalPages(pageResult.getTotalPages());
+        response.setHasNext(pageResult.hasNext());
+        
+        return ResponseEntity.ok(response);
+    }
+
+    
+    @Override
+    public ResponseEntity<ApplicationUpdateResponse> editApplication(UUID id,
+            @Valid EditApplicationRequest req) {
+        
+        return handleCommand(
+            () -> sevice.process(new Command.Update(id.toString(), req.getName(), req.getBody())),
+            (ApplicationUpdated evt) -> ResponseEntity.ok(new ApplicationUpdateResponse(
+                    UUID.fromString(evt.applicationRef()),
+                    ApplicationState.valueOf(evt.state().toString()),
+                    evt.name(),
+                    evt.body(),
+                    evt.eventTimestamp()
+            ))
+        );
+    }
+    
+  
 }

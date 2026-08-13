@@ -5,6 +5,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +18,7 @@ import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationPublished;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationRejected;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationUpdated;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationVerified;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationEntity;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationRepository;
@@ -22,7 +27,7 @@ import com.marcinsielawa.applicationrequestmanager.persistence.PublishingIdGener
 
 @Service
 class ApplicationRequestServiceImpl implements ApplicationRequestService {
-    
+
     final ApplicationRepository applicationRepository;
     
     final ApplicationEventPublisher applicationEventPublisher;
@@ -53,7 +58,7 @@ class ApplicationRequestServiceImpl implements ApplicationRequestService {
         case TransitionResult.Complete(var event) -> {
             switch (event) {
                 case ApplicationCreated created -> {
-                    applicationRepository.save(new ApplicationEntity(created.eventId(), created.name(), created.body(), ApplicationState.CREATED, created.createdAt()));
+                    applicationRepository.save(new ApplicationEntity(created.eventId(), created.name(), created.body(), ApplicationState.CREATED, created.eventTimestamp()));
                     applicationEventPublisher.publishEvent(created);
                     return new Result.Success<>(created);
                 }
@@ -66,6 +71,16 @@ class ApplicationRequestServiceImpl implements ApplicationRequestService {
                     applicationRepository.save(existing.get());
                     applicationEventPublisher.publishEvent(deleted);
                     return new Result.Success<>(deleted);
+                }
+                case ApplicationUpdated updated -> {
+                    
+                    existing.get().setName(updated.name());
+                    existing.get().setBody(updated.body());
+                    existing.get().setUpdatedAt(now);
+                    
+                    applicationRepository.save(existing.get());
+                    applicationEventPublisher.publishEvent(updated);
+                    return new Result.Success<>(updated);
                 }
                 case ApplicationRejected rejected -> {
                     
@@ -103,13 +118,13 @@ class ApplicationRequestServiceImpl implements ApplicationRequestService {
                     existing.get().setPublishingId(id);
                     existing.get().setUpdatedAt(now);
                     
-                    ApplicationPublished publishedWithId = new ApplicationPublished(published.eventId(), published.applicationRef(), id, published.createdAt());
+                    ApplicationPublished publishedWithId = new ApplicationPublished(published.eventId(), published.applicationRef(), id, published.eventTimestamp());
                     
                     applicationRepository.save(existing.get());
                     applicationEventPublisher.publishEvent(publishedWithId);
                     return new Result.Success<>(publishedWithId);
                 }
-                default -> throw new RuntimeException("Unknown event type");
+                default -> throw new RuntimeException("Unknown event type" + event.getClass().getSimpleName());
             }
         }
         case TransitionResult.InvalidTransition(Object reason) -> {
@@ -130,6 +145,21 @@ class ApplicationRequestServiceImpl implements ApplicationRequestService {
         return applicationRepository.findById(id.toString())
                 .filter(e -> e != null)
                 .map(EntityMapper::toDomain);
+    }
+
+    @Override
+    public Page<ApplicationAggregate> listApplications(Integer page, Integer pageSize, String name,
+            String stateInput) {
+
+        int pageNumber = (page != null && page >= 0) ? page : 0;
+        int size = (pageSize != null && pageSize > 0) ? pageSize : 10;
+        
+        Pageable pageable = PageRequest.of(pageNumber, size, Sort.by("createdAt").descending());
+        
+        Page<ApplicationAggregate> pageResult = applicationRepository.findByNameAndStateOptional(name, stateInput == null ? null : ApplicationState.valueOf(stateInput), pageable)
+                .map(EntityMapper::toDomain);
+        
+        return pageResult;
     }
 
 }

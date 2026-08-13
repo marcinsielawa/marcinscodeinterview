@@ -1,4 +1,4 @@
-# Application request manager
+v# Application request manager
 
 Developed using Spring boot, Java 25.
 
@@ -78,4 +78,6 @@ Part 3 Verify, Accept and Publish use cases
 The remaining use cases proved to be easy to implement with the state machine and tests in place. 
 Publishing required to generate a unique numeric ID so I decided to use H2's build in sequence generating capabilities.
 
+## Stage IV Browsing and editing
 
+Last but not least we deliver classic CRUD operations of listing and editing
