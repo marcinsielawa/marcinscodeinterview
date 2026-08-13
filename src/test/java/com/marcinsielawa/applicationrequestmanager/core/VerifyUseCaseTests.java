@@ -21,14 +21,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationVerified;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationEntity;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationRepository;
 import com.marcinsielawa.applicationrequestmanager.persistence.PublishingIdGenerator;
 
 @SpringBootTest(classes = ApplicationRequestServiceImpl.class)
 @ExtendWith(MockitoExtension.class)
-class DeleteUseCaseTests {
+class VerifyUseCaseTests {
     
     ApplicationRequestService service;
     
@@ -41,24 +41,23 @@ class DeleteUseCaseTests {
     @MockitoBean
     PublishingIdGenerator publishingIdGenerator;
     
-    ApplicationEntity testEntity = new ApplicationEntity(
-            UUID.randomUUID().toString(), "name", "body", ApplicationState.CREATED, OffsetDateTime.now());
-    
     @BeforeEach
     void before() {
         service = new ApplicationRequestServiceImpl(applicationRepository, applicationEventPublisher, publishingIdGenerator);
-        
-        Optional<ApplicationEntity> foo = Optional.of(testEntity);
-        when(applicationRepository.findById(testEntity.getId())).thenReturn(foo);
     }
 
     @Test
-    @DisplayName("Delete application use case - happy path")
-    void testDeleteUseCaseHappyPath() {
+    @DisplayName("Verify application use case - happy path CREATED > VERIFIED")
+    void testVerifyUseCaseHappyPath() {
+        
+        ApplicationEntity testEntity = new ApplicationEntity(
+                UUID.randomUUID().toString(), "name", "body", ApplicationState.CREATED, OffsetDateTime.now());
+        
+        when(applicationRepository.findById(testEntity.getId())).thenReturn(Optional.of(testEntity));
         
         ArgumentCaptor<ApplicationEntity> entityCaptor = ArgumentCaptor.forClass(testEntity.getClass());
         
-        Result result = service.process(new Command.Delete(testEntity.getId(), "not good"));
+        Result result = service.process(new Command.Verify(testEntity.getId()));
 
         verify(applicationRepository).save(entityCaptor.capture());
 
@@ -66,21 +65,20 @@ class DeleteUseCaseTests {
 
         assertEquals(Result.Success.class, result.getClass());
         
-        assertEquals(ApplicationState.DELETED, capturedEntity.getState());
-        assertEquals("not good"              , capturedEntity.getReason());
-        verify(applicationEventPublisher).publishEvent(any(ApplicationDeleted.class));
+        assertEquals(ApplicationState.VERIFIED, capturedEntity.getState());
+        verify(applicationEventPublisher).publishEvent(any(ApplicationVerified.class));
     }
     
     @Test
-    @DisplayName("Delete application use case - wrong status - expect CREATED")
-    void testDeleteOnlyCreated() {
+    @DisplayName("Verify application use case - wrong status (expect CREATED)")
+    void testVerifyOnlyCreated() {
         
         ApplicationEntity testEntity = new ApplicationEntity(
                 UUID.randomUUID().toString(), "name", "body", ApplicationState.DELETED, OffsetDateTime.now());
         
         when(applicationRepository.findById(testEntity.getId())).thenReturn(Optional.of(testEntity));
         
-        Result result = service.process(new Command.Delete(testEntity.getId(), "not good"));
+        Result result = service.process(new Command.Verify(testEntity.getId()));
         
         assertEquals(Result.BusinessRuleViolation.class, result.getClass());
         verify(applicationRepository, never()).save(any(ApplicationEntity.class));
@@ -88,21 +86,15 @@ class DeleteUseCaseTests {
     }
     
     @Test
-    @DisplayName("Delete application use case - not found")
-    void testDeleteNotFound() {
-        Result result = service.process(new Command.Delete("doest-exist", "not good"));
+    @DisplayName("Verify application use case - not found")
+    void testVerifyNotFound() {
+        ApplicationEntity testEntity = new ApplicationEntity(
+                UUID.randomUUID().toString(), "name", "body", ApplicationState.CREATED, OffsetDateTime.now());
+        when(applicationRepository.findById(testEntity.getId())).thenReturn(Optional.of(testEntity));
+        
+        Result result = service.process(new Command.Verify("doest-exist"));
         
         assertEquals(Result.NotFound.class, result.getClass());
-        verify(applicationRepository, never()).save(any(ApplicationEntity.class));
-        verifyNoInteractions(applicationEventPublisher);
-    }
-    
-    @Test
-    @DisplayName("Delete application use case - reason is required")
-    void testDeleteNoReason() {
-        Result result = service.process(new Command.Delete(testEntity.getId(), " "));
-        
-        assertEquals(Result.BusinessRuleViolation.class, result.getClass());
         verify(applicationRepository, never()).save(any(ApplicationEntity.class));
         verifyNoInteractions(applicationEventPublisher);
     }

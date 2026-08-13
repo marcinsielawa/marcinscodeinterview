@@ -9,12 +9,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.marcinsielawa.applicationrequestmanager.core.Command.Targetted;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationAccepted;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationPublished;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationRejected;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationVerified;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationEntity;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationRepository;
 import com.marcinsielawa.applicationrequestmanager.persistence.EntityMapper;
+import com.marcinsielawa.applicationrequestmanager.persistence.PublishingIdGenerator;
 
 @Service
 class ApplicationRequestServiceImpl implements ApplicationRequestService {
@@ -22,10 +26,13 @@ class ApplicationRequestServiceImpl implements ApplicationRequestService {
     final ApplicationRepository applicationRepository;
     
     final ApplicationEventPublisher applicationEventPublisher;
+    
+    final PublishingIdGenerator idgen;
 
-    ApplicationRequestServiceImpl(ApplicationRepository store, ApplicationEventPublisher events) {
+    ApplicationRequestServiceImpl(ApplicationRepository store, ApplicationEventPublisher events, PublishingIdGenerator idgen) {
         this.applicationRepository     = store;
         this.applicationEventPublisher = events;
+        this.idgen = idgen;
     } 
 
     @Override
@@ -69,6 +76,38 @@ class ApplicationRequestServiceImpl implements ApplicationRequestService {
                     applicationRepository.save(existing.get());
                     applicationEventPublisher.publishEvent(rejected);
                     return new Result.Success<>(rejected);
+                }
+                case ApplicationVerified verified -> {
+                    
+                    existing.get().setState(ApplicationState.VERIFIED);
+                    existing.get().setUpdatedAt(now);
+                    
+                    applicationRepository.save(existing.get());
+                    applicationEventPublisher.publishEvent(verified);
+                    return new Result.Success<>(verified);
+                }
+                case ApplicationAccepted accepted -> {
+                    
+                    existing.get().setState(ApplicationState.ACCEPTED);
+                    existing.get().setUpdatedAt(now);
+                    
+                    applicationRepository.save(existing.get());
+                    applicationEventPublisher.publishEvent(accepted);
+                    return new Result.Success<>(accepted);
+                }
+                case ApplicationPublished published -> {
+                    
+                    long id = idgen.generateNextPublishingId();
+                    
+                    existing.get().setState(ApplicationState.PUBLISHED);
+                    existing.get().setPublishingId(id);
+                    existing.get().setUpdatedAt(now);
+                    
+                    ApplicationPublished publishedWithId = new ApplicationPublished(published.eventId(), published.applicationRef(), id, published.createdAt());
+                    
+                    applicationRepository.save(existing.get());
+                    applicationEventPublisher.publishEvent(publishedWithId);
+                    return new Result.Success<>(publishedWithId);
                 }
                 default -> throw new RuntimeException("Unknown event type");
             }

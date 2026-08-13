@@ -1,6 +1,7 @@
 package com.marcinsielawa.applicationrequestmanager.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -21,14 +22,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationAccepted;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationPublished;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationVerified;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationEntity;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationRepository;
 import com.marcinsielawa.applicationrequestmanager.persistence.PublishingIdGenerator;
 
 @SpringBootTest(classes = ApplicationRequestServiceImpl.class)
 @ExtendWith(MockitoExtension.class)
-class DeleteUseCaseTests {
+class PublishUseCaseTests {
     
     ApplicationRequestService service;
     
@@ -41,24 +44,23 @@ class DeleteUseCaseTests {
     @MockitoBean
     PublishingIdGenerator publishingIdGenerator;
     
-    ApplicationEntity testEntity = new ApplicationEntity(
-            UUID.randomUUID().toString(), "name", "body", ApplicationState.CREATED, OffsetDateTime.now());
-    
     @BeforeEach
     void before() {
         service = new ApplicationRequestServiceImpl(applicationRepository, applicationEventPublisher, publishingIdGenerator);
-        
-        Optional<ApplicationEntity> foo = Optional.of(testEntity);
-        when(applicationRepository.findById(testEntity.getId())).thenReturn(foo);
     }
 
     @Test
-    @DisplayName("Delete application use case - happy path")
-    void testDeleteUseCaseHappyPath() {
+    @DisplayName("Publish application use case - happy path ACCEPTED > PUBLISHED")
+    void testPublishUseCaseHappyPath() {
+        
+        ApplicationEntity testEntity = new ApplicationEntity(
+                UUID.randomUUID().toString(), "name", "body", ApplicationState.ACCEPTED, OffsetDateTime.now());
+        
+        when(applicationRepository.findById(testEntity.getId())).thenReturn(Optional.of(testEntity));
         
         ArgumentCaptor<ApplicationEntity> entityCaptor = ArgumentCaptor.forClass(testEntity.getClass());
         
-        Result result = service.process(new Command.Delete(testEntity.getId(), "not good"));
+        Result result = service.process(new Command.Publish(testEntity.getId()));
 
         verify(applicationRepository).save(entityCaptor.capture());
 
@@ -66,21 +68,21 @@ class DeleteUseCaseTests {
 
         assertEquals(Result.Success.class, result.getClass());
         
-        assertEquals(ApplicationState.DELETED, capturedEntity.getState());
-        assertEquals("not good"              , capturedEntity.getReason());
-        verify(applicationEventPublisher).publishEvent(any(ApplicationDeleted.class));
+        assertEquals(ApplicationState.PUBLISHED, capturedEntity.getState());
+        assertNotNull(capturedEntity.getPublishingId());
+        verify(applicationEventPublisher).publishEvent(any(ApplicationPublished.class));
     }
     
     @Test
-    @DisplayName("Delete application use case - wrong status - expect CREATED")
-    void testDeleteOnlyCreated() {
+    @DisplayName("Publish application use case - wrong status (expect ACCEPTED)")
+    void testPublishOnlyCreated() {
         
         ApplicationEntity testEntity = new ApplicationEntity(
-                UUID.randomUUID().toString(), "name", "body", ApplicationState.DELETED, OffsetDateTime.now());
+                UUID.randomUUID().toString(), "name", "body", ApplicationState.CREATED, OffsetDateTime.now());
         
         when(applicationRepository.findById(testEntity.getId())).thenReturn(Optional.of(testEntity));
         
-        Result result = service.process(new Command.Delete(testEntity.getId(), "not good"));
+        Result result = service.process(new Command.Accept(testEntity.getId()));
         
         assertEquals(Result.BusinessRuleViolation.class, result.getClass());
         verify(applicationRepository, never()).save(any(ApplicationEntity.class));
@@ -88,21 +90,15 @@ class DeleteUseCaseTests {
     }
     
     @Test
-    @DisplayName("Delete application use case - not found")
-    void testDeleteNotFound() {
-        Result result = service.process(new Command.Delete("doest-exist", "not good"));
+    @DisplayName("Publish application use case - not found")
+    void testPublishNotFound() {
+        ApplicationEntity testEntity = new ApplicationEntity(
+                UUID.randomUUID().toString(), "name", "body", ApplicationState.ACCEPTED, OffsetDateTime.now());
+        when(applicationRepository.findById(testEntity.getId())).thenReturn(Optional.of(testEntity));
+        
+        Result result = service.process(new Command.Accept("doest-exist"));
         
         assertEquals(Result.NotFound.class, result.getClass());
-        verify(applicationRepository, never()).save(any(ApplicationEntity.class));
-        verifyNoInteractions(applicationEventPublisher);
-    }
-    
-    @Test
-    @DisplayName("Delete application use case - reason is required")
-    void testDeleteNoReason() {
-        Result result = service.process(new Command.Delete(testEntity.getId(), " "));
-        
-        assertEquals(Result.BusinessRuleViolation.class, result.getClass());
         verify(applicationRepository, never()).save(any(ApplicationEntity.class));
         verifyNoInteractions(applicationEventPublisher);
     }

@@ -72,3 +72,10 @@ Its also beneficial to cover a not found case, since you may want to delete a no
 Part 2 Reject use case
 
 The rejection use case is trivial to implement because it mimicks deletion only differs with rejection being lefl only for VERIFIED and ACCEPTED applictions.
+
+Part 3 Verify, Accept and Publish use cases
+
+The remaining use cases proved to be easy to implement with the state machine and tests in place. 
+Publishing required to generate a unique numeric ID so I decided to use H2's build in sequence generating capabilities.
+
+

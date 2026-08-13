@@ -33,6 +33,13 @@ public class ApplicationEntity {
         this(id, name, body, state, createdAt);
         this.updatedAt = createdAt;
     }
+    
+    public ApplicationEntity(String id, String name, String body, ApplicationState state, Long publishingId, OffsetDateTime createdAt,
+            OffsetDateTime updatedAt) {
+        this(id, name, body, state, createdAt);
+        this.publishingId = publishingId;
+        this.updatedAt = createdAt;
+    }
 
     @Id
     @Column(nullable = false)
@@ -46,6 +53,9 @@ public class ApplicationEntity {
     
     @Column(nullable = true)
     String reason;
+    
+    @Column(nullable = true)
+    Long publishingId;
     
     @Enumerated(EnumType.STRING)
     ApplicationState state;

@@ -10,14 +10,17 @@ import org.springframework.web.bind.annotation.RestController;
 import com.marcinsielawa.applicationrequestmanager.core.ApplicationAggregate;
 import com.marcinsielawa.applicationrequestmanager.core.ApplicationRequestService;
 import com.marcinsielawa.applicationrequestmanager.core.Command;
+import com.marcinsielawa.applicationrequestmanager.core.Event;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationAccepted;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated;
-import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted;
-import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationRejected;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationPublished;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationVerified;
 import com.marcinsielawa.applicationrequestmanager.core.Result;
 import com.marcinsielawa.interview.ApplicationResponse;
 import com.marcinsielawa.interview.ApplicationState;
 import com.marcinsielawa.interview.CreateApplicationRequest;
 import com.marcinsielawa.interview.DeleteApplicationRequest;
+import com.marcinsielawa.interview.PublishingResponse;
 import com.marcinsielawa.interview.RejectApplicationRequest;
 import com.marcinsielawa.inverview.DefaultApi;
 
@@ -31,36 +34,73 @@ public class ApplicationRequestController implements DefaultApi {
     ApplicationRequestController(ApplicationRequestService sevice) {
         this.sevice = sevice;
     }
+    
+    private <T, R> ResponseEntity<R> handleCommand(
+            java.util.function.Supplier<Result> commandExecution, 
+            java.util.function.Function<T, ResponseEntity<R>> successMapper
+        ) {
+            Result result = commandExecution.get();
+            
+            return switch (result) {
+                case Result.Success(Event payload) -> successMapper.apply((T) payload);
+                case Result.NotFound() -> ResponseEntity.notFound().build();
+                case Result.ValidationError(var reason) -> ResponseEntity.badRequest()
+                        .body((R) reason); 
+                case Result.BusinessRuleViolation(var reason) -> ResponseEntity.status(422)
+                        .body((R) reason);
+                default -> throw new RuntimeException("Unable to process command");
+            };
+    }
 
     @Override
     public ResponseEntity<Void> createApplication(@Valid CreateApplicationRequest req) {
-        
-        Result result = sevice.process(new Command.Create(req.getName(), req.getBody()));
-        
-        return switch(result) {
-            case Result.Success(ApplicationCreated evt) -> ResponseEntity.created(URI.create("/api/applications/" + evt.eventId())).build();
-            default -> throw new RuntimeException();
-        };
+        return handleCommand(
+            () -> sevice.process(new Command.Create(req.getName(), req.getBody())),
+            (ApplicationCreated evt) -> ResponseEntity
+                .created(URI.create("/api/applications/" + evt.eventId()))
+                .build()
+        );
     }
-    
+
     @Override
     public ResponseEntity<Void> deleteApplication(UUID id, @Valid DeleteApplicationRequest req) {
-        Result result = sevice.process(new Command.Delete(id.toString(), req.getReason()));
-        
-        return switch(result) {
-            case Result.Success(_) -> ResponseEntity.noContent().build();
-            default -> throw new RuntimeException();
-        };
+        return handleCommand(
+            () -> sevice.process(new Command.Delete(id.toString(), req.getReason())),
+            _ -> ResponseEntity.noContent().build()
+        );
     }
-    
+
     @Override
     public ResponseEntity<Void> rejectApplication(UUID id, @Valid RejectApplicationRequest req) {
-        Result result = sevice.process(new Command.Reject(id.toString(), req.getReason()));
-        
-        return switch(result) {
-            case Result.Success(_) -> ResponseEntity.noContent().build();
-            default -> throw new RuntimeException();
-        };
+        return handleCommand(
+            () -> sevice.process(new Command.Reject(id.toString(), req.getReason())),
+            _  -> ResponseEntity.ok().build()
+        );
+    }
+    
+
+    @Override
+    public ResponseEntity<Void> acceptApplication(UUID id) {
+        return handleCommand(
+                () -> sevice.process(new Command.Accept(id.toString())),
+                _ -> ResponseEntity.ok().build()
+        );
+    }
+
+    @Override
+    public ResponseEntity<PublishingResponse> publishApplication(UUID id) {
+        return handleCommand(
+                () -> sevice.process(new Command.Publish(id.toString())),
+                (ApplicationPublished evt) -> ResponseEntity.ok().body(new PublishingResponse(evt.publishingId()))
+        );
+    }
+
+    @Override
+    public ResponseEntity<Void> verifyApplication(UUID id) {
+        return handleCommand(
+                () -> sevice.process(new Command.Verify(id.toString())),
+                _ -> ResponseEntity.ok().build()
+        );
     }
 
     @Override
@@ -80,6 +120,4 @@ public class ApplicationRequestController implements DefaultApi {
             return ResponseEntity.notFound().build();
         }
     }
-
-
 }

@@ -3,9 +3,12 @@ package com.marcinsielawa.applicationrequestmanager.core;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationAccepted;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationPublished;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationRejected;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationVerified;
 
 
 public class StateTransition {
@@ -62,6 +65,37 @@ public class StateTransition {
                     eventId,
                     existing.id(),
                     reject.reason(),
+                    now));
+        } else if (command instanceof Command.Verify) {
+            if(existing.state() != ApplicationState.CREATED) 
+                return new TransitionResult.InvalidTransition<>("only CREATED");
+            
+            final String eventId = UUID.randomUUID().toString();
+            
+            return new TransitionResult.Complete<>(new ApplicationVerified(
+                    eventId,
+                    existing.id(),
+                    now));
+        } else if (command instanceof Command.Accept) {
+            if(existing.state() != ApplicationState.VERIFIED) 
+                return new TransitionResult.InvalidTransition<>("only VERIFIED");
+            
+            final String eventId = UUID.randomUUID().toString();
+            
+            return new TransitionResult.Complete<>(new ApplicationAccepted(
+                    eventId,
+                    existing.id(),
+                    now));
+        } else if (command instanceof Command.Publish) {
+            if(existing.state() != ApplicationState.ACCEPTED) 
+                return new TransitionResult.InvalidTransition<>("only ACCEPTED");
+            
+            final String eventId = UUID.randomUUID().toString();
+            
+            return new TransitionResult.Complete<>(new ApplicationPublished(
+                    eventId,
+                    existing.id(),
+                    null,
                     now));
         }
         return null;

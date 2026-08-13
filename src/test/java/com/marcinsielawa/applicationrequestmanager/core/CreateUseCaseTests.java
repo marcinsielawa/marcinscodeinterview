@@ -25,6 +25,7 @@ import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationEntity;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationRepository;
+import com.marcinsielawa.applicationrequestmanager.persistence.PublishingIdGenerator;
 
 @SpringBootTest(classes = ApplicationRequestServiceImpl.class)
 @ExtendWith(MockitoExtension.class)
@@ -38,12 +39,15 @@ class CreateUseCaseTests {
     @MockitoBean
     ApplicationEventPublisher applicationEventPublisher;
     
+    @MockitoBean
+    PublishingIdGenerator publishingIdGenerator;
+    
     ApplicationEntity testEntity = new ApplicationEntity(
             UUID.randomUUID().toString(), "name", "body", ApplicationState.CREATED, OffsetDateTime.now());
     
     @BeforeEach
     void before() {
-        service = new ApplicationRequestServiceImpl(applicationRepository, applicationEventPublisher);
+        service = new ApplicationRequestServiceImpl(applicationRepository, applicationEventPublisher, publishingIdGenerator);
         
         Optional<ApplicationEntity> foo = Optional.of(testEntity);
         when(applicationRepository.findById(testEntity.getId())).thenReturn(foo);

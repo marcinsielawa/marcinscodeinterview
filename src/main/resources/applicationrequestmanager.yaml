@@ -77,6 +77,49 @@ paths:
       responses:
         '204':
           description: Application rejected
+  /api/applications/{id}/verify:
+    post:
+      operationId: VerifyApplication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Application verified
+  /api/applications/{id}/accept:
+    post:
+      operationId: AcceptApplication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Application accepted
+  /api/applications/{id}/publish:
+    post:
+      operationId: PublishApplication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Application published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishingResponse'
 
 components:
   schemas:
@@ -122,7 +165,7 @@ components:
           pattern: '.*\S.*'
     ApplicationState:
       type: string
-      enum: [CREATED, DELETED]
+      enum: [CREATED, DELETED, ACCEPTED, REJECTED, VERIFIED]
     ApplicationResponse:
       type: object
       required:
@@ -144,4 +187,12 @@ components:
         createdAt:
           type: string
           format: date-time
+    PublishingResponse:
+      type: object
+      required:
+        - publishingId
+      properties:
+        publishingId:
+          type: integer
+          format: int64
 

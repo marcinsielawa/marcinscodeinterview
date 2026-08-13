@@ -1,0 +1,1 @@
+CREATE SEQUENCE IF NOT EXISTS request_publishing_id_seq START WITH 1 INCREMENT BY 1;

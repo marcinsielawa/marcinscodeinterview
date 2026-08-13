@@ -25,6 +25,7 @@ import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationRejected;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationEntity;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationRepository;
+import com.marcinsielawa.applicationrequestmanager.persistence.PublishingIdGenerator;
 
 @SpringBootTest(classes = ApplicationRequestServiceImpl.class)
 @ExtendWith(MockitoExtension.class)
@@ -38,9 +39,12 @@ class RejectUseCaseTests {
     @MockitoBean
     ApplicationEventPublisher applicationEventPublisher;
     
+    @MockitoBean
+    PublishingIdGenerator publishingIdGenerator;
+    
     @BeforeEach
     void before() {
-        service = new ApplicationRequestServiceImpl(applicationRepository, applicationEventPublisher);
+        service = new ApplicationRequestServiceImpl(applicationRepository, applicationEventPublisher, publishingIdGenerator);
     }
 
     @Test
