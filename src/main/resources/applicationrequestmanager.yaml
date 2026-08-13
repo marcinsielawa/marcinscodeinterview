@@ -39,6 +39,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApplicationResponse'
+    delete:
+      summary: Delete Application
+      operationId: deleteApplication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteApplicationRequest'
+      responses:
+        '204':
+          description: Application deleted
 
 components:
   schemas:
@@ -54,9 +73,29 @@ components:
         body: 
           type: string
           pattern: '.*\S.*'
+    DeleteApplicationRequest:
+      type: object
+      required: 
+        - reason
+      properties:
+        reason: 
+          type: string
+          pattern: '.*\S.*'
+    ApplicationRequest:
+      type: object
+      required: 
+        - name
+        - body
+      properties:
+        name: 
+          type: string
+          pattern: '.*\S.*'
+        body: 
+          type: string
+          pattern: '.*\S.*'
     ApplicationState:
       type: string
-      enum: [CREATED]
+      enum: [CREATED, DELETED]
     ApplicationResponse:
       type: object
       required:

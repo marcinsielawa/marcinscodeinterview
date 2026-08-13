@@ -58,3 +58,13 @@ Location: /api/applications/045ddbb2-3897-41f9-9b07-2fce79f7f8a5
 ### PART 4
 
 The audit logger has been implemented as a spring application event listener. It stores the domain event during the same transaction as writing to the application store and its synchronous.
+
+## Stage III Implement remaining use cases
+
+Acceptence criteria: we can perform all use cases except browsing
+
+Part 1 Delete use case
+
+I will use the same approach for implementing use cases and their invariants as with the Create Application use case, namely a compile-time safe state transition accompanied by use case oriented tests.
+We dont delete appliations, instead we set the satus to DELETED.
+Its also beneficial to cover a not found case, since you may want to delete a non existing applcation.

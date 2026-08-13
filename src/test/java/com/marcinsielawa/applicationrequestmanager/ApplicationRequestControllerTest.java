@@ -48,12 +48,12 @@ class ApplicationRequestControllerTest {
     @BeforeEach
     void before() {
         
-        when(service.process(any(Command.class))).thenAnswer(new Answer<Result<?>>() {
+        when(service.process(any(Command.class))).thenAnswer(new Answer<Result>() {
             @Override
-            public Result<?> answer(InvocationOnMock invocation) throws Throwable {
+            public Result answer(InvocationOnMock invocation) throws Throwable {
                 Event e = new Event.ApplicationCreated(UUID.randomUUID().toString(), "name", "body", OffsetDateTime.now());
                 Result.Success<Event> res = new Result.Success<>(e);
-                return (Result<?>) res;
+                return res;
             }});
     }
 
@@ -73,7 +73,7 @@ class ApplicationRequestControllerTest {
                 .content(objectMapper.writeValueAsString(Map.of("name", "foo", "body", "bar"))))
         .andExpect(status().isCreated());
         
-        verify(service).process(any(Command.CreateApplication.class));
+        verify(service).process(any(Command.Create.class));
     }
 
 }

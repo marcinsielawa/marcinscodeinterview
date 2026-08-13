@@ -11,10 +11,12 @@ import com.marcinsielawa.applicationrequestmanager.core.ApplicationAggregate;
 import com.marcinsielawa.applicationrequestmanager.core.ApplicationRequestService;
 import com.marcinsielawa.applicationrequestmanager.core.Command;
 import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationCreated;
+import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted;
 import com.marcinsielawa.applicationrequestmanager.core.Result;
 import com.marcinsielawa.interview.ApplicationResponse;
 import com.marcinsielawa.interview.ApplicationState;
 import com.marcinsielawa.interview.CreateApplicationRequest;
+import com.marcinsielawa.interview.DeleteApplicationRequest;
 import com.marcinsielawa.inverview.DefaultApi;
 
 import jakarta.validation.Valid;
@@ -31,10 +33,20 @@ public class ApplicationRequestController implements DefaultApi{
     @Override
     public ResponseEntity<Void> createApplication(@Valid CreateApplicationRequest req) {
         
-        Result<?> result = sevice.process(new Command.CreateApplication(req.getName(), req.getBody()));
+        Result result = sevice.process(new Command.Create(req.getName(), req.getBody()));
         
         return switch(result) {
             case Result.Success(ApplicationCreated evt) -> ResponseEntity.created(URI.create("/api/applications/" + evt.id())).build();
+            default -> throw new RuntimeException();
+        };
+    }
+    
+    @Override
+    public ResponseEntity<Void> deleteApplication(UUID id, @Valid DeleteApplicationRequest req) {
+        Result result = sevice.process(new Command.Delete(id.toString()));
+        
+        return switch(result) {
+            case Result.Success(ApplicationDeleted evt) -> ResponseEntity.noContent().build();
             default -> throw new RuntimeException();
         };
     }
