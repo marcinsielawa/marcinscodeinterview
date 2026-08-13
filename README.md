@@ -9,8 +9,9 @@ Acceptence criteria: app is healthy
 I start off by creating an empty spring boot project with some useful dependencies.
 We will be using h2 in memory database and standard non-reactive web.
 
-`spring init --dependencies=lombok,web,h2,data-jpa,actuator --build=maven inverview -a applicationrequestmanager -g com.marcinsielawa -j 25
-cd inverview`
+`spring init --dependencies=lombok,web,h2,data-jpa,actuator --build=maven inverview -a applicationrequestmanager -g com.marcinsielawa -j 25`
+
+`cd inverview`
 
 `mvn spring-boot:run`
 
