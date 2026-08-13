@@ -1,4 +1,4 @@
-v# Application request manager
+# Application request manager
 
 Developed using Spring boot, Java 25.
 
@@ -15,6 +15,7 @@ cd inverview`
 `mvn spring-boot:run`
 
 `curl 127.0.0.1:8080/actuator/health`
+
 `{"groups":["liveness","readiness"],"status":"UP"}`
 
 ## Stage II. Create application use case
@@ -46,13 +47,17 @@ curl -v -X POST http://127.0.0.1:8080/api/applications \
 -d '{
   "name": "cash",
   "body": "gas"
-}'                 
-...
+}' 
+`
+
+`                
 Location: /api/applications/045ddbb2-3897-41f9-9b07-2fce79f7f8a5
 `
 
 `
  curl 127.0.0.1:8080/api/applications/117199f8-1db9-49cc-8666-96cadf5c4638 
+`
+`
 {"id":"117199f8-1db9-49cc-8666-96cadf5c4638","state":"CREATED","name":"gas","body":"cash","createdAt":"2026-08-13T10:25:49.909364+02:00"}
 `
 ### PART 4
