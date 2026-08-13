@@ -22,7 +22,7 @@ import com.marcinsielawa.inverview.DefaultApi;
 import jakarta.validation.Valid;
 
 @RestController
-public class ApplicationRequestController implements DefaultApi{
+public class ApplicationRequestController implements DefaultApi {
     
     final ApplicationRequestService sevice;
 
@@ -36,14 +36,14 @@ public class ApplicationRequestController implements DefaultApi{
         Result result = sevice.process(new Command.Create(req.getName(), req.getBody()));
         
         return switch(result) {
-            case Result.Success(ApplicationCreated evt) -> ResponseEntity.created(URI.create("/api/applications/" + evt.id())).build();
+            case Result.Success(ApplicationCreated evt) -> ResponseEntity.created(URI.create("/api/applications/" + evt.eventId())).build();
             default -> throw new RuntimeException();
         };
     }
     
     @Override
     public ResponseEntity<Void> deleteApplication(UUID id, @Valid DeleteApplicationRequest req) {
-        Result result = sevice.process(new Command.Delete(id.toString()));
+        Result result = sevice.process(new Command.Delete(id.toString(), req.getReason()));
         
         return switch(result) {
             case Result.Success(ApplicationDeleted evt) -> ResponseEntity.noContent().build();

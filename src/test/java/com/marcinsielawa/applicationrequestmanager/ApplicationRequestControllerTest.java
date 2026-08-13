@@ -51,7 +51,7 @@ class ApplicationRequestControllerTest {
         when(service.process(any(Command.class))).thenAnswer(new Answer<Result>() {
             @Override
             public Result answer(InvocationOnMock invocation) throws Throwable {
-                Event e = new Event.ApplicationCreated(UUID.randomUUID().toString(), "name", "body", OffsetDateTime.now());
+                Event e = new Event.ApplicationCreated(UUID.randomUUID().toString(), UUID.randomUUID().toString(), "name", "body", OffsetDateTime.now());
                 Result.Success<Event> res = new Result.Success<>(e);
                 return res;
             }});

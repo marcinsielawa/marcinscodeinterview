@@ -25,6 +25,9 @@ public class AuditEntity {
     String id;
     
     @Column(nullable = false)
+    String applicationRef;
+    
+    @Column(nullable = false)
     String eventType;
     
     @Column(nullable = false)

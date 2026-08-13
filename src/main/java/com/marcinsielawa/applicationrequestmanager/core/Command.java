@@ -6,6 +6,6 @@ public sealed interface Command {
        String id();
    }
     
-   public record Create(String name, String body) implements Command {}
-   public record Delete(String id)                implements Targetted {}
+   public record Create(String name, String body)   implements Command {}
+   public record Delete(String id  , String reason) implements Targetted {}
 }

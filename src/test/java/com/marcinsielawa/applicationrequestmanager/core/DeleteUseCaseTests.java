@@ -28,7 +28,7 @@ import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationReposi
 
 @SpringBootTest(classes = ApplicationRequestServiceImpl.class)
 @ExtendWith(MockitoExtension.class)
-class UseCaseTests {
+class DeleteUseCaseTests {
     
     ApplicationRequestService service;
     
@@ -48,27 +48,6 @@ class UseCaseTests {
         Optional<ApplicationEntity> foo = Optional.of(testEntity);
         when(applicationRepository.findById(testEntity.getId())).thenReturn(foo);
     }
-    
-    @Test
-    @DisplayName("Create application use case - happy path")
-    void testHappyPath() {
-        Result result = service.process(new Command.Create("foo", "bar"));
-        
-        assertEquals(Result.Success.class, result.getClass());
-        verify(applicationRepository).save(any(ApplicationEntity.class));
-        verify(applicationEventPublisher).publishEvent(any(ApplicationCreated.class));
-
-    }
-    
-    @Test
-    @DisplayName("Create application use case - name and body are obligatory")
-    void testRequiredFields() {
-        Result result = service.process(new Command.Create("", ""));
-        
-        assertEquals(Result.ValidationError.class, result.getClass());
-        verifyNoInteractions(applicationRepository);
-        verifyNoInteractions(applicationEventPublisher);
-    }
 
     @Test
     @DisplayName("Delete application use case - happy path")
@@ -76,7 +55,7 @@ class UseCaseTests {
         
         ArgumentCaptor<ApplicationEntity> entityCaptor = ArgumentCaptor.forClass(testEntity.getClass());
         
-        Result result = service.process(new Command.Delete(testEntity.getId()));
+        Result result = service.process(new Command.Delete(testEntity.getId(), "not good"));
 
         verify(applicationRepository).save(entityCaptor.capture());
 
@@ -85,6 +64,7 @@ class UseCaseTests {
         assertEquals(Result.Success.class, result.getClass());
         
         assertEquals(ApplicationState.DELETED, capturedEntity.getState());
+        assertEquals("not good"              , capturedEntity.getReason());
         verify(applicationEventPublisher).publishEvent(any(ApplicationDeleted.class));
     }
     
@@ -97,7 +77,7 @@ class UseCaseTests {
         
         when(applicationRepository.findById(testEntity.getId())).thenReturn(Optional.of(testEntity));
         
-        Result result = service.process(new Command.Delete(testEntity.getId()));
+        Result result = service.process(new Command.Delete(testEntity.getId(), "not good"));
         
         assertEquals(Result.BusinessRuleViolation.class, result.getClass());
         verify(applicationRepository, never()).save(any(ApplicationEntity.class));
@@ -107,9 +87,19 @@ class UseCaseTests {
     @Test
     @DisplayName("Delete application use case - not found")
     void testDeleteNotFound() {
-        Result result = service.process(new Command.Delete("doest-exist"));
+        Result result = service.process(new Command.Delete("doest-exist", "not good"));
         
         assertEquals(Result.NotFound.class, result.getClass());
+        verify(applicationRepository, never()).save(any(ApplicationEntity.class));
+        verifyNoInteractions(applicationEventPublisher);
+    }
+    
+    @Test
+    @DisplayName("Delete application use case - reason is required")
+    void testDeleteNoReason() {
+        Result result = service.process(new Command.Delete(testEntity.getId(), " "));
+        
+        assertEquals(Result.BusinessRuleViolation.class, result.getClass());
         verify(applicationRepository, never()).save(any(ApplicationEntity.class));
         verifyNoInteractions(applicationEventPublisher);
     }

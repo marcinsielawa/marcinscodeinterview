@@ -21,7 +21,7 @@ public class AuditLogger {
 
     final ObjectMapper objectMapper;
     
-    private final static String REMOVE_ID_AND_TIMESTAMP = "(?i)\"(id|createdAt)\"\\s*:\\s*(\"(?:\\\\.|[^\"\\\\])*\"|[^,}]+)\\s*,?|,\\s*(?i)\"(id|createdAt)\"\\s*:\\s*(\"(?:\\\\.|[^\"\\\\])*\"|[^,}]+)";
+    private final static String REMOVE_ID_AND_TIMESTAMP = "(?i)\"(eventId|applicationRef|createdAt)\"\\s*:\\s*(\"(?:\\\\.|[^\"\\\\])*\"|[^,}]+)\\s*,?|,\\s*(?i)\"(eventId|applicationRef|createdAt)\"\\s*:\\s*(\"(?:\\\\.|[^\"\\\\])*\"|[^,}]+)";
     
     public AuditLogger() {
         objectMapper = new ObjectMapper();
@@ -30,18 +30,18 @@ public class AuditLogger {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
-    void onEvent(Event evt) {
+    void onEvent(Event evt) throws JsonProcessingException {
 
         AuditEntity saved = new AuditEntity();
 
-        saved.setId(evt.id());
+        saved.setId(evt.eventId());
+        saved.setApplicationRef(evt.applicationRef());
         saved.setCreatedAt(evt.createdAt());
         saved.setEventType(evt.getClass().getSimpleName());
-
-        try {
-            saved.setEventPayload(objectMapper.writeValueAsString(evt).replaceAll(REMOVE_ID_AND_TIMESTAMP, ""));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+        
+        String payload = objectMapper.writeValueAsString(evt).replaceAll(REMOVE_ID_AND_TIMESTAMP, "");
+        if(payload.isBlank() == false ) {
+            saved.setEventPayload(payload);
         }
 
         auditRepository.save(saved);

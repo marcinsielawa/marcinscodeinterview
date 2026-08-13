@@ -14,10 +14,9 @@ import com.marcinsielawa.applicationrequestmanager.core.Event.ApplicationDeleted
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationEntity;
 import com.marcinsielawa.applicationrequestmanager.persistence.ApplicationRepository;
 import com.marcinsielawa.applicationrequestmanager.persistence.EntityMapper;
-import com.marcinsielawa.interview.ApplicationResponse;
 
 @Service
-public class ApplicationRequestServiceImpl implements ApplicationRequestService {
+class ApplicationRequestServiceImpl implements ApplicationRequestService {
     
     final ApplicationRepository applicationRepository;
     
@@ -38,19 +37,23 @@ public class ApplicationRequestServiceImpl implements ApplicationRequestService 
             existing = applicationRepository.findById(t.id());
         } else existing = Optional.empty();
         
-        TransitionResult r = StateTransition.apply(EntityMapper.toDomain(existing), command, OffsetDateTime.now());
+        final OffsetDateTime now = OffsetDateTime.now();
+        
+        TransitionResult r = StateTransition.apply(EntityMapper.toDomain(existing), command, now);
         
         switch(r) {
         case TransitionResult.Complete(var event) -> {
             switch (event) {
                 case ApplicationCreated created -> {
-                    applicationRepository.save(new ApplicationEntity(created.id(), created.name(), created.body(), ApplicationState.CREATED, created.createdAt()));
+                    applicationRepository.save(new ApplicationEntity(created.eventId(), created.name(), created.body(), ApplicationState.CREATED, created.createdAt()));
                     applicationEventPublisher.publishEvent(created);
                     return new Result.Success<>(created);
                 }
                 case ApplicationDeleted deleted -> {
                     
                     existing.get().setState(ApplicationState.DELETED);
+                    existing.get().setReason(deleted.reason());
+                    existing.get().setUpdatedAt(now);
                     
                     applicationRepository.save(existing.get());
                     applicationEventPublisher.publishEvent(deleted);

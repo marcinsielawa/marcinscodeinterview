@@ -18,8 +18,12 @@ public class StateTransition {
             if(create.name() == null || create.name().isBlank()) 
                 return new TransitionResult.InvalidInput<>("Name cannot be empty");
             
+            final String applicationId = UUID.randomUUID().toString();
+            final String eventId       = UUID.randomUUID().toString();
+            
             return new TransitionResult.Complete<>(new ApplicationCreated(
-                    UUID.randomUUID().toString(),
+                    applicationId,
+                    eventId,
                     create.name(),
                     create.body(),
                     now));
@@ -33,8 +37,15 @@ public class StateTransition {
             if(existing.state() != ApplicationState.CREATED) 
                 return new TransitionResult.InvalidTransition<>("only CREATED can be DELETED");
             
+            if(delete.reason() == null || delete.reason().isBlank()) 
+                return new TransitionResult.InvalidTransition<>("deletion reason is required");
+            
+            final String eventId = UUID.randomUUID().toString();
+            
             return new TransitionResult.Complete<>(new ApplicationDeleted(
-                    delete.id(),
+                    eventId,
+                    existing.id(),
+                    delete.reason(),
                     now));
         }
         return null;

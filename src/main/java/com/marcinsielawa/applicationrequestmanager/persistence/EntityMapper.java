@@ -13,7 +13,8 @@ public class EntityMapper {
             domain.name(),
             domain.body(),
             domain.state(),
-            domain.createdAt()
+            domain.createdAt(),
+            domain.updatedAt()
         );
     }
     
@@ -29,7 +30,8 @@ public class EntityMapper {
             entity.getName(),
             entity.getBody(),
             entity.getState(),
-            entity.getCreatedAt()
+            entity.getCreatedAt(),
+            entity.getUpdatedAt()
         );
     }
     

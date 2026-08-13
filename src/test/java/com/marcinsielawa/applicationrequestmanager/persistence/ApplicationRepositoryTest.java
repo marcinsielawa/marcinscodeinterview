@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 
+import com.marcinsielawa.applicationrequestmanager.core.ApplicationState;
+
 @DataJpaTest
 class ApplicationRepositoryTest {
     
@@ -26,12 +28,13 @@ class ApplicationRepositoryTest {
     @DisplayName("Applications are persisted to main store")
     void testPersitingDuringCreation() {
         
-        ApplicationEntity entity = new ApplicationEntity();
-        
-        entity.setId(UUID.randomUUID().toString());
-        entity.setBody("foo");
-        entity.setName("bar");
-        entity.setCreatedAt(OffsetDateTime.now());
+        ApplicationEntity entity = new ApplicationEntity(
+                UUID.randomUUID().toString(),
+                "foo",
+                "bar",
+                ApplicationState.CREATED,
+                OffsetDateTime.now()
+                );
         
         entity = applicationRepository.save(entity);
         
